@@ -1,17 +1,220 @@
-= sinatra-outputbuffer
+= Sinatra::OutputBuffer
 
-Description goes here.
+A Sinatra Extension that makes content output buffering easy within your apps or extensions.
+
+
+== Why was this gem created ?
+
+To enable the Sinatra community to quickly and easily add this functionality to any 
+app / extension they wish to create. ie: preventing time waste or the 're-invention of the wheel'.
+
+
+== Installation
+  
+  #  Add RubyGems.org (former Gemcutter) to your RubyGems sources 
+  $  gem sources -a http://rubygems.org
+
+  $  (sudo)? gem install sinatra-outputbuffer
+
+== Dependencies
+
+This Gem depends upon the following:
+
+=== Runtime:
+
+* sinatra ( >= 1.0.a )
+
+
+=== Development & Tests:
+
+* sinatra-tests (>= 0.1.6)
+* rspec (>= 1.3.0 )
+* rack-test (>= 0.5.3)
+* rspec_hpricot_matchers (>= 0.1.0)
+
+== Getting Started
+
+Sinatra::OutputBuffer could be very useful in essentially two scenarios:
+
+* Apps
+* Sinatra extensions
+
+
+=== In Apps
+
+In the App scenario, Sinatra::OutputBuffer provides the following helper methods:
+
+* <tt>content_for</tt>
+
+* <tt>yield_content</tt>
+
+You can access those methods by doing the following:
+
+  class YourApp < Sinatra::Base
+    helpers Sinatra::OutputBuffer::Helpers
+  
+    <snip...>
+  
+  end
+
+
+Then you can use them as follows:
+
+  <% content_for :some_key do %>
+    <h1>some HTML content here</h1>
+  <% end %>
+  
+  <%= yield_content :some_key %>
+  
+  NB! the syntax used for calling these methods.
+  
+Or in Haml
+  
+  - content_for :some_key do 
+    %h1 some HTML content here
+  
+  = yield_content :some_key
+  
+  NB! the syntax used for calling these methods.
+  
+
+A more concrete example:
+
+  # in ../views/layout.erb
+    <snip...>
+    <style type="text/css" media="screen">
+      <%= yield_content :custom_css %>
+    </style>
+  </head>
+  
+
+  # in ../views/template.erb
+  <% content_for :custom_css do %>
+    body { color: red; }
+  <% end %>
+  
+  # in ../views/shared/sidebar.erb
+  
+  <% content_for :custom_css do %>
+    #sidebar { background-color: black; }
+  <% end %>
+  
+Which outputs:
+
+  <style type="text/css" media="screen">
+    body { color: red; }
+    #sidebar { background-color: black; }
+  </style>
+
+
+The methods outlined below are also available in this mode, but not as useful (?) as
+when used in extensions.
+
+
+=== In Sinatra Extensions
+
+When developing a Sinatra Extension, then you just require the gem and include / register
+it into the extension you are developing, like this:
+
+  require 'sinatra/outputbuffer'
+  
+  module Sinatra
+    module YourExtension
+      include Sinatra::OutputBuffer::Helpers
+      
+      <snip...>
+      
+    end
+  end
+  
+... or if your extension needs to be registered to function...
+  
+  module Sinatra
+    module YourExtension
+      
+      <snip...>
+      
+      def self.registered(app)
+        app.helpers Sinatra::OutputBuffer::Helpers
+        # or
+        app.register Sinatra::OutputBuffer # works too, and leaves a 'trace' of it being loaded
+        <snip...>
+      end
+      
+    end
+  end
+    
+
+Once included, Sinatra::OutputBuffer provides the following very useful helper methods:
+
+* <tt>capture_html</tt>
+
+* <tt>concat_content</tt>
+
+* <tt>block_is_template?</tt>
+
+
+With these three methods you can very easily write something like this: 
+
+  ##
+  # Creates an html tag with given name, content and options
+  # 
+  # ==== Examples
+  # 
+  #   content_tag(:p, "hello", :class => 'light')
+  # 
+  #   content_tag(:p, :class => 'dark') do ... 
+  #     # some output here..
+  #   end
+  # 
+  #   content_tag(name, content=nil, options={}, &block)
+  # 
+  def content_tag(*args, &block)
+    name = args.first
+    options = args.extract_options!
+    tag_html = block_given? ? capture_html(&block) : args[1]
+    tag_result = tag(name, options.merge(:content => tag_html))
+    block_is_template?(block) ? concat_content(tag_result) : tag_result
+  end
+  
+  # NB! code sample taken from the Padrino framework [http://github.com/padrino/padrino-framework/]
+
+
+That's more or less it. 
+
+
+
+== RTFM
+
+If the above is not clear enough, please check the Specs for a better understanding.
+
+
+== Errors / Bugs
+
+If something is not behaving intuitively, it is a bug, and should be reported.
+Report it here: http://github.com/kematzy/sinatra-outputbuffer/issues 
+
+
+== TODOs
+
+* Keep it up to date with any changes in Sinatra.
+
+* Any other improvements you can think of.
+
 
 == Note on Patches/Pull Requests
  
 * Fork the project.
 * Make your feature addition or bug fix.
-* Add tests for it. This is important so I don't break it in a
-  future version unintentionally.
+* Add tests for it. This is important so I don't break it in a future version unintentionally.
 * Commit, do not mess with rakefile, version, or history.
-  (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
+  * (if you want to have your own version, that is fine but bump version in a commit by itself I can ignore when I pull)
 * Send me a pull request. Bonus points for topic branches.
 
 == Copyright
 
-Copyright (c) 2010 kematzy. See LICENSE for details.
+Copyright (c) 2010 Kematzy, Nathan Esquenazi & Others (?)
+
+Released under the MIT License.
+
+See LICENSE for further details.
