@@ -25,6 +25,7 @@ Gem::Specification.new do |s|
      "Rakefile",
      "VERSION",
      "lib/sinatra/outputbuffer.rb",
+     "sinatra-outputbuffer.gemspec",
      "spec/sinatra/outputbuffer_spec.rb",
      "spec/spec.opts",
      "spec/spec_helper.rb"
